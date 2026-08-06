@@ -1,0 +1,30 @@
+{
+  "name": "prompt-clarify",
+  "version": "1.0.0",
+  "description": "Prompting tool with memory. Ask once, remember forever.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Yash707077/prompt-clarify.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Yash707077/prompt-clarify/issues"
+  },
+  "homepage": "https://github.com/Yash707077/prompt-clarify#readme",
+  "devDependencies": {
+    "@types/node": "^26.1.2",
+    "tsx": "^4.23.8",
+    "typescript": "^7.0.2"
+  },
+  "dependencies": {
+    "@google/genai": "^2.15.0",
+    "dotenv": "^17.4.2"
+  },
+  "type": "module"
+}

@@ -1,0 +1,34 @@
+# One prompt per line. Lines starting with # are ignored.
+#
+# These are chosen to probe DIFFERENT failure modes, not to flatter the tool.
+# A tool that improves every prompt is a tool that over-edits.
+
+# 1. Vague creative — should get audience, length, structure
+write a blog post about AI
+
+# 2. Simple fact — should be left almost alone
+what is the capital of France
+
+# 3. Work task — should use the marketing context
+help me write a cold email to a new client
+
+# 4. Off-profile — nothing to do with marketing. Memory should mostly stay out.
+plan a 3 day trip to Goa
+
+# 5. Near-empty — almost no intent to work with. Honest answer may be "cannot help much".
+fix this
+
+# 6. Already good — a well-specified prompt. Should barely change.
+Write a 200-word product description for a stainless steel water bottle, aimed at gym-goers, in a friendly tone, with three bullet points on features.
+
+# 7. Technical — profile says marketing, but the request is code
+write a function to check if an email address is valid
+
+# 8. Rambling — buried intent, lots of noise
+so basically i have this client and they want something for instagram maybe reels or posts idk and its a jewellery brand and i need ideas
+
+# 9. Ambiguous word — "pitch" could mean sales pitch, sound, or sports field
+help me with a pitch
+
+# 10. Non-English mixed in — common for the target user
+mujhe ek instagram caption chahiye for a new coffee shop opening

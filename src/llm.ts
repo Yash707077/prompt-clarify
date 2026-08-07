@@ -21,26 +21,79 @@ if (!apiKey) {
 
 const ai = new GoogleGenAI({ apiKey });
 
+// Which model to use. Override in .env with GEMINI_MODEL=...
+//
+// Default is Flash. Tested against flash-lite side by side: lite gave
+// noticeably thinner rewrites (no structure, no length guidance). A real
+// user runs this a handful of times a day, not hundreds, so the ~250/day
+// free quota is plenty and the quality difference is worth it.
+//
+// The test runner uses lite instead, since it burns 10 requests per run.
+//
+// Using a "-latest" alias rather than a pinned version because Google
+// retires exact versions without warning — that already broke this once.
+const MODEL = process.env.GEMINI_MODEL ?? "gemini-flash-latest";
+
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
 /**
  * Send text to Gemini, get text back.
  * This is the whole AI layer. Everything else is our own logic.
+ *
+ * Retries transient network failures. Does NOT retry real errors like a bad
+ * key or a dead model — repeating those just wastes the user's time.
  */
-export async function ask(prompt: string): Promise<string> {
+export async function ask(prompt: string, attempt = 1): Promise<string> {
+  const MAX_ATTEMPTS = 3;
+
   try {
     const response = await ai.models.generateContent({
-      // "gemini-flash-latest" is an alias that always points at the current
-      // Flash model. Pinning an exact version (e.g. "gemini-3.6-flash") means
-      // your code breaks when Google retires it — which already happened once.
-      model: "gemini-flash-latest",
+      model: MODEL,
       contents: prompt,
     });
     return response.text ?? "";
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
 
-    // The free tier allows roughly 10 requests per minute.
-    // Without this, hitting the limit shows an unreadable wall of JSON.
-    if (message.includes("429") || message.includes("RESOURCE_EXHAUSTED")) {
+    // A dropped connection on our side.
+    const isNetwork =
+      message.includes("fetch failed") ||
+      message.includes("ECONNRESET") ||
+      message.includes("ETIMEDOUT") ||
+      message.includes("socket hang up");
+
+    // Google's servers are busy. Common on the free tier, and always temporary.
+    const isOverloaded =
+      message.includes("503") ||
+      message.includes("UNAVAILABLE") ||
+      message.includes("overloaded") ||
+      message.includes("high demand");
+
+    // We sent too many requests too fast. Needs a longer pause than the others.
+    const isRateLimited =
+      message.includes("429") || message.includes("RESOURCE_EXHAUSTED");
+
+    if ((isNetwork || isOverloaded || isRateLimited) && attempt < MAX_ATTEMPTS) {
+      // Rate limits need a real pause; the others clear up quickly.
+      // Waits grow each attempt so we do not hammer a struggling server.
+      const wait = isRateLimited ? attempt * 20_000 : attempt * 2_000;
+      await sleep(wait);
+      return ask(prompt, attempt + 1);
+    }
+
+    if (isNetwork) {
+      throw new Error(
+        "Could not reach Gemini after 3 tries. Check your internet connection.",
+      );
+    }
+
+    if (isOverloaded) {
+      throw new Error(
+        "Gemini's servers are busy right now. This is temporary — try again in a minute.",
+      );
+    }
+
+    if (isRateLimited) {
       throw new Error(
         "Rate limit hit. The free tier allows ~10 requests per minute. Wait a minute and try again.",
       );

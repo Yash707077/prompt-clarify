@@ -37,6 +37,21 @@ export async function ask(prompt: string): Promise<string> {
     return response.text ?? "";
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
+
+    // The free tier allows roughly 10 requests per minute.
+    // Without this, hitting the limit shows an unreadable wall of JSON.
+    if (message.includes("429") || message.includes("RESOURCE_EXHAUSTED")) {
+      throw new Error(
+        "Rate limit hit. The free tier allows ~10 requests per minute. Wait a minute and try again.",
+      );
+    }
+
+    if (message.includes("404")) {
+      throw new Error(
+        "That model is no longer available. Run: npx tsx src/models.ts to see which models your key can use.",
+      );
+    }
+
     throw new Error(`Gemini call failed: ${message}`);
   }
 }

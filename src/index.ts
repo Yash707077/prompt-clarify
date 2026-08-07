@@ -1,10 +1,14 @@
 // prompt-clarify — entry point
 //
-// Step 9: on first run, ask five questions and save the answers.
-// On every run after that, load them silently. No questions, ever again.
+// Step 10: the whole loop.
+//   1. Load what we know about the user (or ask, on first run)
+//   2. Take the rough prompt they typed
+//   3. Fill the gaps from memory
+//   4. Print the improved prompt, ready to copy
 
 import { loadMemory, profileToContext, memoryPath } from "./memory.js";
 import { runSetup } from "./setup.js";
+import { improvePrompt } from "./fixer.js";
 
 const args = process.argv.slice(2);
 
@@ -25,6 +29,7 @@ if (forceSetup || !memory) {
   if (forceSetup) process.exit(0);
 }
 
+// No prompt given — show help and what we remember.
 if (!input) {
   console.log("");
   console.log("  prompt-clarify");
@@ -42,15 +47,28 @@ if (!input) {
   process.exit(0);
 }
 
-// Step 10 will use this context to actually rewrite the prompt.
+// The real work.
 console.log("");
-console.log("  Your prompt:  " + input);
+console.log("  BEFORE");
+console.log("  " + input);
 console.log("");
-console.log("  Memory I would use to fill the gaps:");
-console.log("");
-for (const line of profileToContext(memory.profile).split("\n")) {
-  console.log("    " + line);
+console.log("  Thinking...");
+
+try {
+  const improved = await improvePrompt(input, memory.profile);
+
+  // Move the cursor up and clear the "Thinking..." line.
+  process.stdout.write("[1A[2K");
+
+  console.log("  AFTER");
+  console.log("");
+  for (const line of improved.split("\n")) {
+    console.log("  " + line);
+  }
+  console.log("");
+} catch (error) {
+  process.stdout.write("[1A[2K");
+  console.error("  " + (error instanceof Error ? error.message : String(error)));
+  console.error("");
+  process.exit(1);
 }
-console.log("");
-console.log("  (Step 10 will turn these two things into a better prompt.)");
-console.log("");

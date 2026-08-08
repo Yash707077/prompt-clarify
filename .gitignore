@@ -147,3 +147,9 @@ dist/
 
 # Generated test output — regenerate with: npm run testrun
 test-results.md
+
+# macOS junk
+.DS_Store
+
+# Obsidian workspace state
+.obsidian/

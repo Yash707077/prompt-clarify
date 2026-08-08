@@ -96,3 +96,28 @@ export async function improvePrompt(
 
   return cleaned;
 }
+
+/**
+ * Was the rewrite actually worth doing?
+ *
+ * If the tool hands back something nearly identical, the honest thing is to
+ * say "your prompt was already fine" rather than pretending it helped.
+ * Silently returning near-identical text makes the user unable to tell the
+ * difference between "I improved this" and "this needed no improving".
+ */
+export function isMeaningfullyDifferent(before: string, after: string): boolean {
+  const normalise = (s: string) =>
+    s
+      .toLowerCase()
+      .replace(/[^a-z0-9\s]/g, "") // ignore punctuation-only changes
+      .replace(/\s+/g, " ")
+      .trim();
+
+  const a = normalise(before);
+  const b = normalise(after);
+
+  if (a === b) return false;
+
+  // A rewrite that adds fewer than 15 characters of real content is noise.
+  return Math.abs(b.length - a.length) >= 15 || !b.startsWith(a);
+}

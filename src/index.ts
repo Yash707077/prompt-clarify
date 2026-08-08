@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 // prompt-clarify — entry point
 //
 // The whole loop:
@@ -8,7 +9,7 @@
 
 import { loadMemory, profileToContext, memoryPath } from "./memory.js";
 import { runSetup } from "./setup.js";
-import { improvePrompt } from "./fixer.js";
+import { improvePrompt, isMeaningfullyDifferent } from "./fixer.js";
 import {
   bold,
   cyan,
@@ -68,6 +69,16 @@ const stopSpinner = startSpinner("Filling the gaps from memory...");
 try {
   const improved = await improvePrompt(input, memory.profile);
   stopSpinner();
+
+  // Be honest when the prompt did not need help.
+  if (!isMeaningfullyDifferent(input, improved)) {
+    console.log("  " + green(bold("ALREADY GOOD")));
+    console.log("");
+    console.log("  " + dim("Your prompt already says what it needs to."));
+    console.log("  " + dim("Nothing worth changing. Send it as it is."));
+    console.log("");
+    process.exit(0);
+  }
 
   console.log("  " + green(bold("AFTER")));
   console.log("");

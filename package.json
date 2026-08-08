@@ -2,12 +2,27 @@
   "name": "prompt-clarify",
   "version": "0.1.0",
   "description": "Prompting tool with memory. Ask once, remember forever.",
-  "main": "src/index.ts",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "prompt-clarify": "dist/index.js"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "start": "tsx src/index.ts",
     "models": "tsx src/models.ts",
+    "testrun": "tsx src/testrun.ts",
+    "build": "tsup",
     "typecheck": "tsc --noEmit",
-    "test": "echo \"No tests yet — added at Step 12\" && exit 0"
+    "prepublishOnly": "npm run typecheck && npm run build",
+    "test": "echo \"No unit tests yet — see test-prompts.txt for the manual suite\" && exit 0"
   },
   "repository": {
     "type": "git",
@@ -30,12 +45,12 @@
   "homepage": "https://github.com/Yash707077/prompt-clarify#readme",
   "devDependencies": {
     "@types/node": "^26.1.2",
+    "tsup": "^8.5.1",
     "tsx": "^4.23.8",
     "typescript": "^7.0.2"
   },
   "dependencies": {
     "@google/genai": "^2.15.0",
     "dotenv": "^17.4.2"
-  },
-  "type": "module"
+  }
 }

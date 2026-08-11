@@ -1,6 +1,6 @@
 {
   "name": "prompt-clarify",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Prompting tool with memory. Ask once, remember forever.",
   "type": "module",
   "main": "dist/index.js",

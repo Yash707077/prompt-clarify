@@ -98,9 +98,12 @@ That profile is saved to `~/.prompt-clarify/memory.json` — your home folder, n
 
 After that, every prompt goes through three stages:
 
-1. **Relevance** — which profile facts actually matter for *this* prompt? Usually most of them don't. A note that you're building a CLI tool has no business appearing in a prompt about a blog post.
-2. **Restraint** — does this prompt need help at all? If it already states audience, format, length and tone, it's returned unchanged.
-3. **Rewrite** — fill only the relevant gaps. Never invent facts about you, and never invent facts about the subject.
+1. **Intent** — do you want the AI to *do* a task, to *write something you'll send*, or to *help you think*? Getting this backwards is worse than a weak rewrite. "I made a tool and sent it to some developers, give me feedback" means you want a message to send them, not a review of your tool.
+2. **Relevance** — which profile facts actually matter for *this* prompt? Usually most of them don't. A note that you're building a CLI tool has no business appearing in a prompt about a blog post.
+3. **Restraint** — does this prompt need help at all? If it already states audience, format, length and tone, it's returned unchanged.
+4. **Rewrite** — fill only the relevant gaps. Never invent facts about you, and never invent facts about the subject.
+
+Mixed-language input works — Hinglish, or any mix. It reads the intent and writes the prompt in English.
 
 ### Configuration
 

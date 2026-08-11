@@ -8,7 +8,7 @@
 //   4. Print the improved prompt and copy it to the clipboard
 
 import { loadMemory, profileToContext, memoryPath } from "./memory.js";
-import { runSetup } from "./setup.js";
+import { runSetup, ensureApiKey } from "./setup.js";
 import { improvePrompt, isMeaningfullyDifferent } from "./fixer.js";
 import {
   bold,
@@ -23,8 +23,15 @@ import {
 const args = process.argv.slice(2);
 
 // `setup` forces the questions again, e.g. if your job changed.
+// `setup --key` replaces just the API key, leaving the profile alone.
 const forceSetup = args[0] === "setup";
+const keyOnly = forceSetup && (args[1] === "--key" || args[1] === "key");
 const input = forceSetup ? "" : args.join(" ");
+
+if (keyOnly) {
+  await ensureApiKey(true);
+  process.exit(0);
+}
 
 let memory = await loadMemory();
 
@@ -45,8 +52,9 @@ if (!input) {
   console.log("  " + bold("prompt-clarify"));
   console.log("  " + dim("Ask once. Remember forever."));
   console.log("");
-  console.log("  Usage:  " + cyan('npx tsx src/index.ts "your prompt here"'));
-  console.log("  Reset:  " + cyan("npx tsx src/index.ts setup"));
+  console.log("  Usage:    " + cyan('prompt-clarify "your prompt here"'));
+  console.log("  Redo setup: " + cyan("prompt-clarify setup"));
+  console.log("  New key:    " + cyan("prompt-clarify setup --key"));
   console.log("");
   console.log("  " + bold("What I remember about you"));
   for (const line of profileToContext(memory.profile).split("\n")) {
@@ -57,6 +65,11 @@ if (!input) {
   console.log("");
   process.exit(0);
 }
+
+// A profile can exist without a key — for example if someone set up inside a
+// project folder using .env, then ran the tool from somewhere else. Collect
+// the key rather than failing at them.
+await ensureApiKey();
 
 // The real work.
 console.log("");

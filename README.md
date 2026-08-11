@@ -59,26 +59,31 @@ npx prompt-clarify "your prompt"
 
 ## Setup
 
-You need a Google Gemini API key. The free tier is genuinely free — no credit card, no expiry.
-
-1. Get a key at [aistudio.google.com/apikey](https://aistudio.google.com/apikey) → **Create API key in new project**
-2. Create a `.env` file where you run the tool:
+Just run it. On first use it walks you through everything:
 
 ```bash
-GEMINI_API_KEY=your_key_here
+prompt-clarify setup
 ```
 
-> **Use a new Google Cloud project.** Free-tier quota is counted per project, not per key.
+It asks for a Google Gemini API key, then five questions about you. Both are saved to `~/.prompt-clarify/`, so it works from any folder afterwards.
+
+**Getting a key** — the free tier is genuinely free, no credit card, no expiry:
+
+1. Go to [aistudio.google.com/apikey](https://aistudio.google.com/apikey)
+2. Choose **Create API key in new project**
+
+> **Use a new project.** Free-tier quota is counted per Google Cloud project, not per key.
 > **Never enable billing on it** — that permanently removes the free tier.
 
-Then run it once. It asks five questions, saves the answers, and never asks again.
+The key is stored in `~/.prompt-clarify/config.json` with owner-only permissions. If you prefer, set `GEMINI_API_KEY` as an environment variable instead — that takes precedence.
 
 ## Usage
 
 ```bash
 prompt-clarify "your vague prompt"   # improve a prompt
-prompt-clarify setup                 # redo the five questions
 prompt-clarify                       # show what it remembers about you
+prompt-clarify setup                 # redo the five questions
+prompt-clarify setup --key           # replace just the API key
 ```
 
 The improved prompt is copied to your clipboard automatically.
@@ -101,8 +106,13 @@ After that, every prompt goes through three stages:
 
 | Variable | Default | Notes |
 |---|---|---|
-| `GEMINI_API_KEY` | *(required)* | Your key |
+| `GEMINI_API_KEY` | from `~/.prompt-clarify/config.json` | Set as an env var to override the stored key |
 | `GEMINI_MODEL` | `gemini-flash-latest` | `gemini-flash-lite-latest` has ~4× the daily quota but produces thinner rewrites |
+
+Files it creates, both in your home folder:
+
+- `~/.prompt-clarify/config.json` — your API key (permissions `0600`)
+- `~/.prompt-clarify/memory.json` — your profile
 
 ---
 

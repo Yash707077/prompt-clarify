@@ -1,0 +1,14 @@
+name = "prompt-clarify-api"
+main = "src/index.js"
+compatibility_date = "2026-08-01"
+
+# KV stores the daily counters. Create it once with:
+#   npx wrangler kv namespace create LIMITS
+# then paste the id it prints below.
+[[kv_namespaces]]
+binding = "LIMITS"
+id = "4ac1e2e9a7ce40cd9f74a45d3bb9477e"
+
+# The Gemini key is NOT in this file and must never be.
+# This file is committed to a public repo. Set the key as a secret instead:
+#   npx wrangler secret put GEMINI_API_KEY

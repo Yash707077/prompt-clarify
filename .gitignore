@@ -153,3 +153,10 @@ test-results.md
 
 # Obsidian workspace state
 .obsidian/
+
+# Built extension zip - regenerate rather than commit, it goes stale
+prompt-clarify-extension.zip
+
+# Cloudflare Worker build cache
+worker/.wrangler/
+worker/node_modules/

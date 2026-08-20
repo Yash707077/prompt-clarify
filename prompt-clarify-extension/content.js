@@ -13,27 +13,13 @@ window.PC = window.PC || {};
   if (PC.buttonReady) return;
   PC.buttonReady = true;
 
-  // ChatGPT is the only one with a reliable, stable id worth targeting.
-  // Everywhere else we fall back to "the biggest visible editable thing",
-  // which is imperfect but survives redesigns far better than a class name
-  // scraped from their markup — those change every few weeks.
-  const GENERIC = ["div[contenteditable='true']", "textarea"];
-
   const SITES = [
     {
       match: /chatgpt\.com|chat\.openai\.com/,
-      selectors: ["#prompt-textarea", ...GENERIC],
+      selectors: ["#prompt-textarea", "div[contenteditable='true']", "textarea"],
     },
-    { match: /claude\.ai/, selectors: GENERIC },
-    { match: /gemini\.google\.com/, selectors: GENERIC },
-    { match: /grok\.com/, selectors: GENERIC },
-    { match: /x\.com/, selectors: GENERIC },
-    { match: /copilot\.microsoft\.com/, selectors: GENERIC },
-    { match: /perplexity\.ai/, selectors: GENERIC },
-    { match: /deepseek\.com/, selectors: GENERIC },
-    { match: /mistral\.ai/, selectors: GENERIC },
-    { match: /meta\.ai/, selectors: GENERIC },
-    { match: /poe\.com/, selectors: GENERIC },
+    { match: /claude\.ai/, selectors: ["div[contenteditable='true']", "textarea"] },
+    { match: /gemini\.google\.com/, selectors: ["div[contenteditable='true']", "textarea"] },
   ];
 
   let button = null;

@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "prompt-clarify",
-  "version": "0.3.0",
+  "version": "0.2.0",
   "description": "Ask once. Remember forever. Improves your prompt using what it already knows about you.",
   "permissions": ["storage", "contextMenus", "activeTab", "scripting"],
   "host_permissions": [
@@ -41,16 +41,7 @@
         "https://chatgpt.com/*",
         "https://chat.openai.com/*",
         "https://claude.ai/*",
-        "https://gemini.google.com/*",
-        "https://grok.com/*",
-        "https://x.com/i/grok*",
-        "https://copilot.microsoft.com/*",
-        "https://www.perplexity.ai/*",
-        "https://perplexity.ai/*",
-        "https://chat.deepseek.com/*",
-        "https://chat.mistral.ai/*",
-        "https://www.meta.ai/*",
-        "https://poe.com/*"
+        "https://gemini.google.com/*"
       ],
       "js": ["config.js", "prompt.js", "toast.js", "content.js"],
       "css": ["content.css"],

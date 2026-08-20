@@ -39,7 +39,21 @@ const PER_IP_DAILY = 40;
 // of retries near the limit cannot tip us over into a billable state.
 const GLOBAL_DAILY = 200;
 
-const MODEL = "gemini-flash-latest";
+// Tried in order. If one is overloaded we move to the next rather than
+// failing at the user.
+//
+// WHY THIS LIST, IN THIS ORDER
+// flash-lite first: it is less contended and has roughly 4x the free-tier
+// daily allowance, and for rewriting a prompt the quality difference is small.
+// Full flash second: better output, but the newest models are exactly the ones
+// everyone hammers, so it 503s most often.
+// A pinned older version last: unglamorous, but usually idle when the
+// fashionable ones are melting.
+const MODELS = [
+  "gemini-flash-lite-latest",
+  "gemini-flash-latest",
+  "gemini-2.0-flash",
+];
 const MAX_PROMPT_LENGTH = 4000;
 
 const CORS = {
@@ -70,6 +84,19 @@ async function bump(kv, key, limit) {
 
   await kv.put(key, String(current + 1), { expirationTtl: 60 * 60 * 48 });
   return { allowed: true, used: current + 1 };
+}
+
+/**
+ * Gives a count back after a request that ultimately failed.
+ *
+ * KV is eventually consistent, so this is approximate — under heavy concurrent
+ * load a refund can be lost. That is acceptable: the failure mode is a user
+ * occasionally losing one from their allowance, never being charged money.
+ */
+async function refund(kv, key) {
+  const current = parseInt((await kv.get(key)) ?? "0", 10);
+  if (!Number.isFinite(current) || current <= 0) return;
+  await kv.put(key, String(current - 1), { expirationTtl: 60 * 60 * 48 });
 }
 
 function profileToContext(p) {
@@ -203,34 +230,75 @@ export default {
       );
     }
 
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`;
+    const metaPrompt = buildMetaPrompt(prompt, profile);
+    const upstreamBody = JSON.stringify({
+      contents: [{ parts: [{ text: metaPrompt }] }],
+    });
 
-    let upstream;
-    try {
-      upstream = await fetch(url, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-goog-api-key": env.GEMINI_API_KEY,
-        },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: buildMetaPrompt(prompt, profile) }] }],
-        }),
-      });
-    } catch {
-      return json({ error: "Could not reach Gemini. Try again." }, 502);
+    let upstream = null;
+    let lastStatus = 0;
+
+    // Walk the model list. A 503 means that particular model is busy, not that
+    // the request is bad — so try the next one rather than failing at the user.
+    // Anything else (bad key, malformed request) will fail identically on every
+    // model, so stop immediately instead of hammering all three.
+    for (const model of MODELS) {
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
+
+      let response;
+      try {
+        response = await fetch(url, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-goog-api-key": env.GEMINI_API_KEY,
+          },
+          body: upstreamBody,
+        });
+      } catch {
+        lastStatus = 0;
+        continue; // network blip — try the next model
+      }
+
+      if (response.ok) {
+        upstream = response;
+        break;
+      }
+
+      lastStatus = response.status;
+
+      // Busy or rate-limited on THIS model — another may have room.
+      if (response.status === 503 || response.status === 429) continue;
+
+      // 404 means the model was retired. Skip to the next.
+      if (response.status === 404) continue;
+
+      break; // a real error. Trying other models will not help.
     }
 
-    if (!upstream.ok) {
-      if (upstream.status === 429) {
+    if (!upstream) {
+      // The request never succeeded, so it should not count against anyone.
+      // Without this, a spell of Google overload silently burns through a
+      // user's whole daily allowance on requests that returned nothing —
+      // which is exactly what was happening before this fix.
+      await Promise.all([
+        refund(env.LIMITS, `u:${installId}:${day}`),
+        refund(env.LIMITS, `ip:${ip}:${day}`),
+        refund(env.LIMITS, `g:${day}`),
+      ]);
+
+      if (lastStatus === 429) {
         return json(
-          { error: "Too many requests right now. Try again in a minute." },
+          { error: "Too many requests right now. Wait a minute and try again." },
           429,
         );
       }
-      if (upstream.status === 503) {
+      if (lastStatus === 503 || lastStatus === 0) {
         return json(
-          { error: "Gemini's servers are busy. Try again in a minute." },
+          {
+            error:
+              "Google's AI is busy right now — this happens on the free tier. Wait a minute and try again.",
+          },
           503,
         );
       }

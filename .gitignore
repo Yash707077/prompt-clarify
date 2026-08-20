@@ -160,3 +160,6 @@ prompt-clarify-extension.zip
 # Cloudflare Worker build cache
 worker/.wrangler/
 worker/node_modules/
+
+# Unzipped copy of the extension - the source is extension/
+prompt-clarify-extension/
